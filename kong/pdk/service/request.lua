@@ -25,6 +25,8 @@ local PHASES = phase_checker.phases
 
 
 local access_and_rewrite = phase_checker.new(PHASES.rewrite, PHASES.access)
+local access_and_rewrite_and_balancer =
+    phase_checker.new(PHASES.rewrite, PHASES.access, PHASES.balancer)
 
 
 ---
@@ -414,6 +416,49 @@ local function new(self)
     ngx.req.read_body()
 
     ngx.req.set_body_data(body)
+  end
+
+
+  if ngx.config.subsystem == "http" then
+    local set_upstream_cert_and_key =
+        require("resty.kong.tls").set_upstream_cert_and_key
+
+    ---
+    -- Sets the client certificate used while handshaking with the Service.
+    --
+    -- The `chain` argument is the client certificate and intermediate chain (if any)
+    -- returned by functions such as [ngx.ssl.parse\_pem\_cert](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_cert).
+    --
+    -- The `key` argument is the private key corresponding to the client certificate
+    -- returned by functions such as [ngx.ssl.parse\_pem\_priv\_key](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_priv_key).
+    --
+    -- @function kong.service.request.set_cert_key
+    -- @phases `rewrite`, `access`, `balancer`
+    -- @tparam cdata chain The client certificate chain
+    -- @tparam cdata key The client certificate private key
+    -- @treturn true|nil `true` if the operation succeeded, `nil` if an error occurred
+    -- @treturn string err error message if an error occurred
+    -- @usage
+    -- local chain = assert(ssl.parse_pem_cert(cert_data))
+    -- local key = assert(ssl.parse_pem_priv_key(key_data))
+    --
+    -- local ok, err = tls.set_cert_key(chain, key)
+    -- if not ok then
+    --   -- do something with error
+    -- end
+    request.set_cert_key = function(chain, key)
+      check_phase(access_and_rewrite_and_balancer)
+
+      if type(chain) ~= "cdata" then
+        error("chain must be a parsed cdata object", 2)
+      end
+
+      if type(key) ~= "cdata" then
+        error("key must be a parsed cdata object", 2)
+      end
+
+      return set_upstream_cert_and_key(chain, key)
+    end
   end
 
 

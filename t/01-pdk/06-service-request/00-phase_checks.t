@@ -25,6 +25,18 @@ qq{
     }
 
     init_worker_by_lua_block {
+        local ssl = require("ngx.ssl")
+
+        local f = assert(io.open("t/certs/test.crt"))
+        local cert_data = f:read("*a")
+        f:close()
+
+        local chain = assert(ssl.parse_pem_cert(cert_data))
+
+        f = assert(io.open("t/certs/test.key"))
+        local key_data = f:read("*a")
+        f:close()
+        local key = assert(ssl.parse_pem_priv_key(key_data))
 
         phases = require("kong.pdk.private.phases").phases
 
@@ -143,6 +155,17 @@ qq{
             }, {
                 method        = "set_body",
                 args          = { { foo = "bar" }, "application/json" },
+                init_worker   = false,
+                certificate   = "pending",
+                rewrite       = true,
+                access        = true,
+                header_filter = false,
+                body_filter   = false,
+                log           = false,
+                admin_api     = "forced false",
+            }, {
+                method        = "set_cert_key",
+                args          = { chain, key, },
                 init_worker   = false,
                 certificate   = "pending",
                 rewrite       = true,
