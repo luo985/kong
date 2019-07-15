@@ -10,7 +10,7 @@ BUILD_TOOLS_DOWNLOAD=$DOWNLOAD_ROOT/openresty-build-tools
 
 mkdir -p $BUILD_TOOLS_DOWNLOAD
 
-wget -O $BUILD_TOOLS_DOWNLOAD/kong-ngx-build https://raw.githubusercontent.com/Kong/openresty-build-tools/master/kong-ngx-build
+wget -O $BUILD_TOOLS_DOWNLOAD/kong-ngx-build https://raw.githubusercontent.com/Kong/openresty-build-tools/feat/lua-kong-nginx-module/kong-ngx-build
 chmod +x $BUILD_TOOLS_DOWNLOAD/kong-ngx-build
 
 export PATH=$BUILD_TOOLS_DOWNLOAD:$PATH
@@ -25,6 +25,7 @@ kong-ngx-build \
     --prefix $INSTALL_ROOT \
     --openresty $OPENRESTY \
     --openresty-patches $OPENRESTY_PATCHES_BRANCH \
+    --kong-nginx-module $KONG_NGINX_MODULE_BRANCH \
     --luarocks $LUAROCKS \
     --openssl $OPENSSL \
     -j $JOBS
