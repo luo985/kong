@@ -25,6 +25,14 @@ return {
       EXCEPTION WHEN UNDEFINED_COLUMN OR UNDEFINED_TABLE THEN
         -- Do nothing, accept existing state
       END$$;
+
+      DO $$
+      BEGIN
+        ALTER TABLE IF EXISTS ONLY "services" ADD "client_certificate_id" UUID REFERENCES "certificates" ("id");
+      EXCEPTION WHEN DUPLICATE_COLUMN THEN
+        -- Do nothing, accept existing state
+      END;
+      $$;
     ]],
   },
 
@@ -40,6 +48,8 @@ return {
         tags set<text>,
         PRIMARY KEY (partition, id)
       );
+
+      ALTER TABLE services ADD client_certificate_id uuid;
     ]],
   },
 }
